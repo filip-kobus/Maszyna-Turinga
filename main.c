@@ -4,56 +4,67 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct e {
+    int m, n, len, indeks;
+    char* input;
+    char currStan[2];
+    char value, kierunek;
+}dane;
+
 void opis();
 
-void konwerter(int, int, int, char*);
+void konwerter(dane *);
 
-void dodajStan(char*, int, int, char*);
+void wypiszStan(dane *);
 
-void maszyna(char*, int*, char*, char*, char*);
+void maszyna(dane *);
 
-void wniosek(char *, int, int);
+void wniosek(dane *);
 
 int main() {
-	int m;
-	int n;
-	opis();
-	printf("Wprowadz m: ");
-	scanf("%d", &m);
-	printf("Wprowadz n: ");
-	scanf("%d", &n);
-	int len = m + n + 1;  //dlugosc wejscia
-    char* input = (char*)calloc(len + 1, sizeof(char));
-	konwerter(m, n, len, input);
-	printf("\nRoznica zapisana unarnie: %s\n\n", input);
-	char currStan[] = "q0"; // stan poczatkowy MT
-	char value = 'x'; //wartosc do zmiany
-	int indeks = 0; //indeks analizowanej wartosci przez MT	
-	char kierunek = 'N';
+	dane stan;
 
-	while (kierunek != 'n') {
-		dodajStan(input, indeks, len + 2, currStan);
-		maszyna(input, &indeks, currStan, &value, &kierunek);
-		if (kierunek != 'n') {
+	opis();
+
+	printf("Wprowadz m: ");
+	scanf("%d", &stan.m);
+	printf("Wprowadz n: ");
+	scanf("%d", &stan.n);
+
+	stan.len = stan.m + stan.n + 1;  //dlugosc wejscia
+    stan.input = (char*)calloc(stan.len + 1, sizeof(char)); //wejscie
+	konwerter(&stan);
+	printf("\nRoznica zapisana unarnie: %s\n\n", stan.input);
+	
+    stan.currStan[0] = 'q'; // stan poczatkowy MT
+    stan.currStan[1] = '0';
+	stan.value = '0'; //wartosc do zmiany
+	stan.indeks = 0; //indeks analizowanej wartosci przez MT	
+	stan.kierunek = 'L'; //kierunek w ktora posunie sie MT w nastepnej iteracji
+
+	while (stan.kierunek != 'n') {
+		wypiszStan(&stan);
+		maszyna(&stan);
+		if (stan.kierunek != 'n') {
 			printf(" %c ", 195);
-			input[indeks] = value;
+			stan.input[stan.indeks] = stan.value;
 		}
-		switch (kierunek) {
+		switch (stan.kierunek) {
 		case 'L':
-			indeks--;
+			stan.indeks--;
 			break;
 		case 'P':
-			indeks++;
+			stan.indeks++;
 			break;
 		}
-		if (indeks == len) {
-			len++;
-			input = (char*)realloc(input, len+1);
-			input[len - 1] = 'B';
-			input[len] = '\0';
+		if (stan.indeks == stan.len) {
+			stan.len++;
+			stan.input = (char*)realloc(stan.input, stan.len+1);
+			stan.input[stan.len - 1] = 'B';
+			stan.input[stan.len] = '\0';
 		}
 	}
-	wniosek(input, m, n);
+	wniosek(&stan);
 	return 0;
 }
 
@@ -66,32 +77,31 @@ void opis() {
 	printf("	    \\\n\n");
 }
 
-void konwerter(int m, int n, int len, char* wynik)
-{
-	for (int i = 0; i < len; i++) {
-		if (i != m) wynik[i] = '0';
-		else wynik[i] = '1';
-	}
+void konwerter(dane *ptr) {
+    for (int i = 0; i < ptr->len; i++) {
+        if (i != ptr->m) ptr->input[i] = '0';
+        else ptr->input[i] = '1';
+    }
 }
 
-
-void dodajStan(char* input, int indeks, int len, char* stan) {
+void wypiszStan(dane *ptr) {
 	int p = 0;
+    int len = ptr -> len + 2;
 	for (int i = 0; i < len; i++) {
-		if (i < indeks) {
-			printf("%c", input[i]);
+		if (i < ptr->indeks) {
+			printf("%c", ptr->input[i]);
 		}
-		if (i == indeks || i == (indeks + 1)) {
-			printf("\033[1;32m%c\033[0m", stan[p]);
+		if (i == ptr->indeks || i == (ptr->indeks + 1)) {
+			printf("\033[1;32m%c\033[0m", ptr->currStan[p]);
 			p++;
 		}
-		if (i > indeks + 1 && input[i - 2] != 'B') {
-			printf("%c", input[i - 2]);
+		if (i > ptr->indeks + 1 && ptr->input[i - 2] != 'B') {
+			printf("%c", ptr->input[i - 2]);
 		}
 	}
 }
 
-void maszyna(char* input, int* indeks, char* stan, char* nowa, char *wart) {
+void maszyna(dane *ptr) {
 	char instr[][3][5] = { {"q1BP", "q5BP", "nnnn"},
 						{"q10P", "q21P", "nnnn"},
 						{"q31L", "q21P", "q4BL"},
@@ -100,10 +110,10 @@ void maszyna(char* input, int* indeks, char* stan, char* nowa, char *wart) {
 						{"q5BP", "q5BP", "q6BP"},
 						{"nnnn", "nnnn", "nnnn"} };
 
-	int wiersz = stan[1] - '0';
+	int wiersz = ptr->currStan[1] - '0';
 	int kolumna;
 
-	switch (input[*indeks]) {
+	switch (ptr->input[ptr->indeks]) {
 	case '0':
 		kolumna = 0;
 		break;
@@ -116,24 +126,24 @@ void maszyna(char* input, int* indeks, char* stan, char* nowa, char *wart) {
 	}
 
 	char* operacja = instr[wiersz][kolumna];
-	stan[1] = operacja[1];
-	*nowa = operacja[2];
+	ptr->currStan[1] = operacja[1];
+	ptr->kierunek = operacja[3];
 
-	*wart = operacja[3];
+	ptr->value = operacja[2];
 }
 
-void wniosek(char* wejscie, int a, int b) {
+void wniosek(dane *ptr) {
 	int p = 0;
 	int suma = 0;
 	printf("\n");
-	while (wejscie[p] != '\0') {
-		if (wejscie[p] == '0') suma++;
+	while (ptr->input[p] != '\0') {
+		if (ptr->input[p] == '0') suma++;
 		p++;
 	}
 	if (suma != 0) {
-		printf("\nRoznica wlasciwa liczb %d i %d wynosi %d\n", a, b, suma);
+		printf("\nRoznica wlasciwa liczb %d i %d wynosi %d\n", ptr->m, ptr->n, suma);
 	}
 	else {
-		printf("\nRoznica wlasciwa liczb %d i %d wynosi %d\n", a, b, 0);
+		printf("\nRoznica wlasciwa liczb %d i %d wynosi %d\n", ptr->m, ptr->n, 0);
 	}
 }
