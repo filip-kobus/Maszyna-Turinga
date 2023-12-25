@@ -1,6 +1,6 @@
 # Turing Machine Emulator
 
-This program emulates Turing Machine which emulates difference between two numbers based on this rule:
+This program emulates Turing Machine which calculates difference between two numbers based on this rule:
 
 ![plot](src/description.png)
 
@@ -13,17 +13,17 @@ This program emulates Turing Machine which emulates difference between two numbe
 
 ## Installation
 
-To run this aplication you need enviroment that supports C language and Makefile software
+To run this aplication you need enviroment that supports C language and Makefile software.
 
-To compile the code type:
+To compile the program, type:
 ```sh
 make all
 ```
-To run
+To run (after compilation):
 ```sh
 ./app
 ```
-For clearing deleting file: 
+To delete compilation file: 
 ```sh
 make clear
 ```
